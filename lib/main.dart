@@ -68,23 +68,30 @@ class HomePageState extends State<HomePage> {
     return null;
   }
 
-  Future<Http.Response> createItem(String nome) async {
-
+  Future<dynamic> createItem(String nome) async {
     final item = {
       "nome": nome,
       "status": "false",
     };
 
     print(item);
+//
+//    var itemData = await Http.post(
+//      url, // change with your API
+//      headers: {"Accept": "application/json"},
+//      body: item,
+//    );
 
-    final itemData = await Http.post(
-      url,  // change with your API
-      body: item,
-    );
-
-    print(itemData.body);
-
-    return itemData;
+    return await Http.post(Uri.encodeFull(url),
+        body: item,
+        headers: {"Accept": "application/json"}).then((Http.Response response) {
+      print(response.body);
+      final int statusCode = response.statusCode;
+      if (statusCode < 200 || statusCode > 400 || json == null) {
+        throw new Exception("Error while fetching data");
+      }
+      return _decoder.convert(response.body);
+    });
   }
 
   @override
@@ -93,7 +100,6 @@ class HomePageState extends State<HomePage> {
         appBar: new AppBar(
           title: new Text("TODO Flutter"),
         ),
-
         body: new Container(
           child: new Column(children: <Widget>[
             new Container(
@@ -112,7 +118,7 @@ class HomePageState extends State<HomePage> {
                     tooltip: 'Enviar',
                     elevation: 8,
                     onPressed: () {
-                        return createItem(myController.text.toString());
+                      return createItem(myController.text.toString());
                     },
                   ),
                 ],
@@ -130,8 +136,15 @@ class HomePageState extends State<HomePage> {
                               children: <Widget>[
                                 new Card(
                                   child: new Container(
-                                    child: new Text(data[index]['nome']),
-                                    padding: const EdgeInsets.all(20.0),
+                                    padding: EdgeInsets.all(20),
+                                    child: new Row(
+                                      children: <Widget>[
+                                        new Text(data[index]['nome']),
+                                        new Text(" - "),
+                                        new Text(statusFormat(
+                                            data[index]['status'].toString()))
+                                      ],
+                                    ),
                                   ),
                                 )
                               ],
@@ -145,5 +158,12 @@ class HomePageState extends State<HomePage> {
         ));
   }
 
-  void _showToast(BuildContext context) {}
+  statusFormat(String text) {
+    if (text == "false")
+      text = "Ativo";
+    else
+      text = "Completado";
+
+    return text;
+  }
 }
