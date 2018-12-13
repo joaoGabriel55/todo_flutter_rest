@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+
 import 'package:http/http.dart' as Http;
 
 void main() => runApp(new MaterialApp(
@@ -27,10 +28,9 @@ class HomePageState extends State<HomePage> {
   List data;
 
   var refreshKey = GlobalKey<RefreshIndicatorState>();
-
   final JsonDecoder _decoder = new JsonDecoder();
-
   final myController = TextEditingController();
+  Http.Client client;
 
   @override
   void dispose() {
@@ -68,30 +68,19 @@ class HomePageState extends State<HomePage> {
     return null;
   }
 
-  Future<dynamic> createItem(String nome) async {
-    final item = {
-      "nome": nome,
-      "status": "false",
-    };
+  createItem(String text) async {
+    //var itemResponse = await Http.post(url, body: item);
 
+    var item = "{\"nome\": \"" + text + "\",\"status\": false}";
     print(item);
-//
-//    var itemData = await Http.post(
-//      url, // change with your API
-//      headers: {"Accept": "application/json"},
-//      body: item,
-//    );
-
-    return await Http.post(Uri.encodeFull(url),
-        body: item,
-        headers: {"Accept": "application/json"}).then((Http.Response response) {
-      print(response.body);
-      final int statusCode = response.statusCode;
-      if (statusCode < 200 || statusCode > 400 || json == null) {
-        throw new Exception("Error while fetching data");
-      }
-      return _decoder.convert(response.body);
-    });
+    var response = await Http.post(url,
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: json.decode(item));
+    print('Response status: ${response.statusCode}');
+    print('Response body: ${response.body}');
   }
 
   @override
